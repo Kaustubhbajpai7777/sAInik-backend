@@ -1,0 +1,118 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int      @id @default(autoincrement())
+  email              String   @unique
+  name               String?
+  password           String
+  createdAt          DateTime @default(now())
+  languagePreference String   @default("en")
+  processedContents  ProcessedContent[] // Relation to ProcessedContent
+  quizResults        QuizResult[]
+  goals              Goal[]
+  progressLogs       ProgressLog[]
+  weeklyReports      WeeklyReport[]
+}
+
+model ProcessedContent {
+  id        Int      @id @default(autoincrement())
+  title     String
+  type      String
+  summary   String   @db.Text
+  quizData  Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  quizResults QuizResult[]
+}
+
+model QuizResult {
+  id              Int      @id @default(autoincrement())
+  score           Int
+  totalQuestions  Int
+  completedAt     DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          Int
+  processedContent ProcessedContent @relation(fields: [contentId], references: [id])
+  contentId       Int
+}
+
+model Goal {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  examType    String     @default("NDA")
+  timeframe   String     // 'daily' or 'weekly'
+  difficulty  String     @default("medium")
+  status      String     @default("active")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+  userId      Int
+  microtasks  Microtask[]
+  weeklyReports WeeklyReport[]
+}
+
+model Microtask {
+  id           String    @id @default(uuid())
+  title        String
+  description  String
+  category     String    // 'Mathematics', 'General Ability', 'English', etc.
+  difficulty   String
+  timeEstimate String
+  questions    Json      // Array of questions with options and answers
+  resources    Json      // Array of suggested resources
+  milestone    String?
+  status       String    @default("pending") // 'pending', 'in-progress', 'completed', 'skipped'
+  score        Int?      // Score achieved (0-100)
+  timeSpent    Int?      // Time spent in minutes
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  goal         Goal      @relation(fields: [goalId], references: [id])
+  goalId       String
+  progressLogs ProgressLog[]
+}
+
+model ProgressLog {
+  id          String    @id @default(uuid())
+  action      String    // 'started', 'completed', 'paused', 'resumed'
+  timestamp   DateTime  @default(now())
+  score       Int?
+  timeSpent   Int?      // in minutes
+  notes       String?
+  microtask   Microtask @relation(fields: [microtaskId], references: [id])
+  microtaskId String
+  user        User      @relation(fields: [userId], references: [id])
+  userId      Int
+}
+
+model WeeklyReport {
+  id              String   @id @default(uuid())
+  weekStartDate   DateTime
+  weekEndDate     DateTime
+  tasksCompleted  Int
+  totalTasks      Int
+  averageScore    Float
+  totalTimeSpent  Int      // in minutes
+  strongAreas     Json     // Array of strong subject areas
+  weakAreas       Json     // Array of areas needing improvement
+  reportText      String   @db.Text
+  recommendations Json     // Array of recommendations
+  emailSent       Boolean  @default(false)
+  emailSentAt     DateTime?
+  createdAt       DateTime @default(now())
+  goal            Goal     @relation(fields: [goalId], references: [id])
+  goalId          String
+  user            User     @relation(fields: [userId], references: [id])
+  userId          Int
+}

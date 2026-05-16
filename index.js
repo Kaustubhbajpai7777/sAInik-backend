@@ -35,6 +35,10 @@ app.get('/', (req, res) => {
   res.status(200).send('sAInik backend is running!');
 });
 
+// Handle browser favicon requests silently to avoid 404 logs
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+app.get('/favicon.png', (req, res) => res.status(204).end());
+
 app.get('/api/test', (req, res) => {
   res.json({ message: "Hello from the sAInik backend!" });
 });

@@ -31,6 +31,10 @@ app.use(cors({
 }));
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.status(200).send('sAInik backend is running!');
+});
+
 app.get('/api/test', (req, res) => {
   res.json({ message: "Hello from the sAInik backend!" });
 });
